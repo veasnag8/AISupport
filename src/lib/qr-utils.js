@@ -55,6 +55,44 @@ function drawFittedText(
   context.fillText(text, x, y);
 }
 
+function drawCurrencyText(context, currencyLabel, centerX, baselineY) {
+  const normalizedLabel = (currencyLabel || "USD $").trim();
+
+  if (normalizedLabel === "KHR ៛") {
+    const code = "KHR";
+    const symbol = "៛";
+    const gap = 16;
+
+    context.textAlign = "left";
+    context.textBaseline = "alphabetic";
+
+    context.font = "700 82px Georgia";
+    const codeWidth = context.measureText(code).width;
+
+    context.font = "700 96px 'Noto Sans Khmer', 'Khmer OS Battambang', Arial";
+    const symbolWidth = context.measureText(symbol).width;
+
+    const startX = centerX - (codeWidth + gap + symbolWidth) / 2;
+
+    context.fillStyle = "#e0332f";
+    context.font = "700 82px Georgia";
+    context.fillText(code, startX, baselineY);
+
+    context.font = "700 96px 'Noto Sans Khmer', 'Khmer OS Battambang', Arial";
+    context.fillText(symbol, startX + codeWidth + gap, baselineY + 4);
+    return;
+  }
+
+  drawFittedText(context, normalizedLabel, centerX, baselineY, {
+    maxWidth: OUTPUT_WIDTH - 80,
+    fontSize: 84,
+    minFontSize: 52,
+    weight: 700,
+    family: "Georgia",
+    color: "#e0332f",
+  });
+}
+
 function getBaseDraw(sourceImage) {
   if (!sourceImage) {
     return null;
@@ -240,14 +278,7 @@ export function renderQrLayout(canvas, settings, options = {}) {
     color: "#111111",
   });
 
-  drawFittedText(context, currencyLabel || "USD $", OUTPUT_WIDTH / 2, 814, {
-    maxWidth: OUTPUT_WIDTH - 80,
-    fontSize: 84,
-    minFontSize: 52,
-    weight: 700,
-    family: "Georgia",
-    color: "#e0332f",
-  });
+  drawCurrencyText(context, currencyLabel, OUTPUT_WIDTH / 2, 814);
 
   if (showGuide) {
     context.strokeStyle = "rgba(150, 150, 150, 0.28)";

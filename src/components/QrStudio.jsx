@@ -14,8 +14,12 @@ import {
 const textFields = [
   { id: "accountName", label: "Account name" },
   { id: "accountNumber", label: "Account number" },
-  { id: "currencyLabel", label: "Currency text" },
   { id: "badgeText", label: "Center badge", placeholder: "Leave blank to hide" },
+];
+
+const currencyOptions = [
+  { value: "USD $", label: "USD $" },
+  { value: "KHR ៛", label: "KHR ៛" },
 ];
 
 function createEmptyPreviewMessage(sourceImage) {
@@ -53,17 +57,37 @@ export default function QrStudio() {
       return;
     }
 
-    renderQrLayout(
-      previewRef.current,
-      {
-        sourceImage,
-        zoom,
-        rotation,
-        crop,
-        ...details,
-      },
-      { showGuide: true },
-    );
+    let active = true;
+
+    const renderPreview = () => {
+      if (!previewRef.current || !active) {
+        return;
+      }
+
+      renderQrLayout(
+        previewRef.current,
+        {
+          sourceImage,
+          zoom,
+          rotation,
+          crop,
+          ...details,
+        },
+        { showGuide: true },
+      );
+    };
+
+    renderPreview();
+
+    if (document.fonts?.ready) {
+      document.fonts.ready.then(() => {
+        renderPreview();
+      });
+    }
+
+    return () => {
+      active = false;
+    };
   }, [sourceImage, zoom, rotation, crop, details]);
 
   async function handleUpload(event) {
@@ -271,6 +295,21 @@ export default function QrStudio() {
                 />
               </div>
             ))}
+
+            <div className="field">
+              <label htmlFor="currencyLabel">Currency text</label>
+              <select
+                id="currencyLabel"
+                value={details.currencyLabel}
+                onChange={(event) => updateDetail("currencyLabel", event.target.value)}
+              >
+                {currencyOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="range-stack">
