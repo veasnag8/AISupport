@@ -1,14 +1,14 @@
 export const OUTPUT_WIDTH = 631;
 export const OUTPUT_HEIGHT = 892;
-export const QR_FRAME = { x: 67, y: 40, width: 497, height: 515 };
+export const QR_FRAME = { x: 67, y: 40, width: 497, height: 497 };
 
-const CORNER_SIZE = 65;
-const CORNER_THICKNESS = 12;
-const BADGE_RADIUS = 47;
+const CORNER_SIZE = 58;
+const CORNER_THICKNESS = 10;
+const BADGE_RADIUS = 39;
 
 export const defaultQrDetails = {
-  accountName: "KPC NIGHT MARKET USD",
-  accountNumber: "001 0001 050 864",
+  accountName: "PHSAR REATREY KPC USD",
+  accountNumber: "005 0000 050 544",
   currencyLabel: "USD $",
   badgeText: "$",
 };
@@ -30,6 +30,29 @@ function drawCorner(context, x, y, horizontalDirection, verticalDirection) {
     horizontalDirection * CORNER_THICKNESS,
     verticalDirection * CORNER_SIZE,
   );
+}
+
+function drawFittedText(
+  context,
+  text,
+  x,
+  y,
+  { maxWidth, fontSize, minFontSize, weight, family, color },
+) {
+  let size = fontSize;
+
+  while (size > minFontSize) {
+    context.font = `${weight} ${size}px ${family}`;
+
+    if (context.measureText(text).width <= maxWidth) {
+      break;
+    }
+
+    size -= 1;
+  }
+
+  context.fillStyle = color;
+  context.fillText(text, x, y);
 }
 
 function getBaseDraw(sourceImage) {
@@ -120,12 +143,6 @@ export function renderQrLayout(canvas, settings, options = {}) {
   context.fillRect(0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT);
 
   context.fillStyle = "#ffffff";
-  context.fillRect(28, 30, OUTPUT_WIDTH - 56, OUTPUT_HEIGHT - 60);
-  context.strokeStyle = "#e7e2d9";
-  context.lineWidth = 2;
-  context.strokeRect(28, 30, OUTPUT_WIDTH - 56, OUTPUT_HEIGHT - 60);
-
-  context.fillStyle = "#fcfaf7";
   context.fillRect(QR_FRAME.x, QR_FRAME.y, QR_FRAME.width, QR_FRAME.height);
 
   if (sourceImage) {
@@ -147,11 +164,11 @@ export function renderQrLayout(canvas, settings, options = {}) {
       context.restore();
     }
   } else {
-    context.strokeStyle = "#d9d1c4";
+    context.strokeStyle = "#d8d8d8";
     context.setLineDash([12, 8]);
     context.strokeRect(QR_FRAME.x + 18, QR_FRAME.y + 18, QR_FRAME.width - 36, QR_FRAME.height - 36);
     context.setLineDash([]);
-    context.fillStyle = "#8b7d6a";
+    context.fillStyle = "#9a907f";
     context.textAlign = "center";
     context.textBaseline = "middle";
     context.font = "600 26px Arial";
@@ -189,7 +206,7 @@ export function renderQrLayout(canvas, settings, options = {}) {
     context.beginPath();
     context.arc(
       OUTPUT_WIDTH / 2,
-      QR_FRAME.y + QR_FRAME.height / 2 + 18,
+      QR_FRAME.y + QR_FRAME.height / 2 + 12,
       BADGE_RADIUS,
       0,
       Math.PI * 2,
@@ -199,25 +216,41 @@ export function renderQrLayout(canvas, settings, options = {}) {
     context.fillStyle = "#ffffff";
     context.textAlign = "center";
     context.textBaseline = "middle";
-    context.font = "700 74px Georgia";
-    context.fillText(badgeText.trim(), OUTPUT_WIDTH / 2, QR_FRAME.y + QR_FRAME.height / 2 + 20);
+    context.font = "700 64px Arial";
+    context.fillText(badgeText.trim(), OUTPUT_WIDTH / 2, QR_FRAME.y + QR_FRAME.height / 2 + 14);
   }
 
-  context.fillStyle = "#173449";
   context.textAlign = "center";
   context.textBaseline = "alphabetic";
-  context.font = "700 42px Georgia";
-  context.fillText(accountName || "ACCOUNT NAME", OUTPUT_WIDTH / 2, 662);
+  drawFittedText(context, accountName || "ACCOUNT NAME", OUTPUT_WIDTH / 2, 642, {
+    maxWidth: OUTPUT_WIDTH - 70,
+    fontSize: 32,
+    minFontSize: 22,
+    weight: 700,
+    family: "Arial",
+    color: "#1a1a1a",
+  });
 
-  context.font = "700 56px Arial";
-  context.fillText(accountNumber || "000 0000 000 000", OUTPUT_WIDTH / 2, 726);
+  drawFittedText(context, accountNumber || "000 0000 000 000", OUTPUT_WIDTH / 2, 706, {
+    maxWidth: OUTPUT_WIDTH - 60,
+    fontSize: 56,
+    minFontSize: 34,
+    weight: 700,
+    family: "Arial",
+    color: "#111111",
+  });
 
-  context.fillStyle = "#c63b2f";
-  context.font = "700 92px Georgia";
-  context.fillText(currencyLabel || "USD $", OUTPUT_WIDTH / 2, 828);
+  drawFittedText(context, currencyLabel || "USD $", OUTPUT_WIDTH / 2, 814, {
+    maxWidth: OUTPUT_WIDTH - 80,
+    fontSize: 84,
+    minFontSize: 52,
+    weight: 700,
+    family: "Georgia",
+    color: "#e0332f",
+  });
 
   if (showGuide) {
-    context.strokeStyle = "rgba(125, 116, 102, 0.3)";
+    context.strokeStyle = "rgba(150, 150, 150, 0.28)";
     context.lineWidth = 2;
     context.setLineDash([10, 6]);
     context.strokeRect(QR_FRAME.x, QR_FRAME.y, QR_FRAME.width, QR_FRAME.height);
