@@ -362,27 +362,6 @@ export default function QrStudio() {
             Output size: {OUTPUT_WIDTH} x {OUTPUT_HEIGHT}px
           </div>
         </Panel>
-
-        <Panel
-          eyebrow="Specs"
-          title="Production notes"
-          description="A few quick details to keep the final asset consistent."
-        >
-          <div className="chip-grid">
-            <article className="chip-card">
-              <strong>Export format</strong>
-              <span>PNG download from the browser</span>
-            </article>
-            <article className="chip-card">
-              <strong>Crop behavior</strong>
-              <span>Drag directly inside the preview frame</span>
-            </article>
-            <article className="chip-card">
-              <strong>Current state</strong>
-              <span>{createEmptyPreviewMessage(sourceImage)}</span>
-            </article>
-          </div>
-        </Panel>
       </div>
     </section>
   );
