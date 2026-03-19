@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Panel from "./Panel";
-import { downloadBlob } from "../lib/file-utils";
+import { dataUrlToImage, downloadBlob, readFileAsDataUrl } from "../lib/file-utils";
 import {
   OUTPUT_HEIGHT,
   OUTPUT_WIDTH,
@@ -10,7 +10,6 @@ import {
   normalizeCropPosition,
   renderQrLayout,
 } from "../lib/qr-utils";
-import { loadPreviewImageFromFile } from "../lib/pdf-utils";
 
 const textFields = [
   { id: "accountName", label: "Account name" },
@@ -22,7 +21,7 @@ const textFields = [
 function createEmptyPreviewMessage(sourceImage) {
   return sourceImage
     ? "Drag inside the preview frame to fine-tune the crop."
-    : "Upload an image or PDF to generate the QR layout preview.";
+    : "Upload an image to generate the QR layout preview.";
 }
 
 export default function QrStudio() {
@@ -78,7 +77,8 @@ export default function QrStudio() {
     setNotice({ tone: "info", text: "Preparing preview..." });
 
     try {
-      const nextImage = await loadPreviewImageFromFile(file);
+      const imageDataUrl = await readFileAsDataUrl(file);
+      const nextImage = await dataUrlToImage(imageDataUrl);
       const nextCrop = getCenteredCrop(nextImage, 1);
 
       setSourceImage(nextImage);
@@ -93,7 +93,7 @@ export default function QrStudio() {
     } catch (error) {
       setNotice({
         tone: "error",
-        text: error.message || "Could not open that file. Try PNG, JPG, WEBP, or PDF.",
+        text: error.message || "Could not open that file. Try PNG, JPG, or WEBP.",
       });
     } finally {
       setBusy(false);
@@ -233,12 +233,12 @@ export default function QrStudio() {
       <Panel
         eyebrow="Tool 01"
         title="QR Layout Studio"
-        description="Upload a QR image or PDF page, adjust the framing, and export the final branded card as PNG."
+        description="Upload a QR image, adjust the framing, and export the final branded card as PNG."
       >
         <div className="stack-lg">
           <div className="notice info">
             <strong>Tip</strong>
-            <span>PDF uploads use the first page automatically.</span>
+            <span>Use a clean QR image for the sharpest final export.</span>
           </div>
 
           <div className="field">
@@ -251,10 +251,10 @@ export default function QrStudio() {
                 id="qr-upload"
                 className="sr-only"
                 type="file"
-                accept="image/*,.pdf"
+                accept="image/png,image/jpeg,image/webp"
                 onChange={handleUpload}
               />
-              <span className="hint">PNG, JPG, WEBP, PDF</span>
+              <span className="hint">PNG, JPG, WEBP</span>
             </div>
             {fileName ? <div className="meta-line">Loaded: {fileName}</div> : null}
           </div>

@@ -1,9 +1,6 @@
 # AI Support Studio
 
-A browser-first React app for two practical workflows:
-
-- Prepare branded QR payment cards from an image or the first page of a PDF
-- Reorder, rotate, split, extract, and merge PDF pages before export
+A browser-first React app for preparing branded QR payment cards.
 
 ## Local development
 
@@ -28,5 +25,4 @@ This repo includes `netlify.toml`, so Netlify can use:
 ## Notes
 
 - Everything runs client-side in the browser
-- PDF previews are generated locally before export
 - QR exports are saved as PNG files at 631 x 892 pixels

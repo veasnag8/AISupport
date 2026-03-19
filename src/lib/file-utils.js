@@ -28,7 +28,3 @@ export function downloadBlob(blob, filename) {
 
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-
-export function downloadBytes(bytes, filename, mime = "application/pdf") {
-  downloadBlob(new Blob([bytes], { type: mime }), filename);
-}

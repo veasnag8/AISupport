@@ -164,7 +164,7 @@ export function renderQrLayout(canvas, settings, options = {}) {
     context.font = "600 26px Arial";
     context.fillText("Upload QR artwork", OUTPUT_WIDTH / 2, QR_FRAME.y + QR_FRAME.height / 2 - 12);
     context.font = "500 18px Arial";
-    context.fillText("Image or first PDF page", OUTPUT_WIDTH / 2, QR_FRAME.y + QR_FRAME.height / 2 + 24);
+    context.fillText("PNG, JPG, or WEBP image", OUTPUT_WIDTH / 2, QR_FRAME.y + QR_FRAME.height / 2 + 24);
   }
 
   context.fillStyle = "#d43d2e";
