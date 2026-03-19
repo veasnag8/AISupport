@@ -115,24 +115,17 @@ export function renderQrLayout(canvas, settings, options = {}) {
   canvas.width = OUTPUT_WIDTH;
   canvas.height = OUTPUT_HEIGHT;
 
-  const background = context.createLinearGradient(0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT);
-  background.addColorStop(0, "#fbf4ea");
-  background.addColorStop(1, "#f0dfc9");
-
   context.clearRect(0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT);
-  context.fillStyle = background;
+  context.fillStyle = "#ffffff";
   context.fillRect(0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT);
 
-  context.fillStyle = "#173449";
-  context.fillRect(0, 0, OUTPUT_WIDTH, 22);
-
-  context.fillStyle = "#fff8ef";
+  context.fillStyle = "#ffffff";
   context.fillRect(28, 30, OUTPUT_WIDTH - 56, OUTPUT_HEIGHT - 60);
-  context.strokeStyle = "#ddccb4";
+  context.strokeStyle = "#e7e2d9";
   context.lineWidth = 2;
   context.strokeRect(28, 30, OUTPUT_WIDTH - 56, OUTPUT_HEIGHT - 60);
 
-  context.fillStyle = "#f4e7d4";
+  context.fillStyle = "#fcfaf7";
   context.fillRect(QR_FRAME.x, QR_FRAME.y, QR_FRAME.width, QR_FRAME.height);
 
   if (sourceImage) {
@@ -154,11 +147,11 @@ export function renderQrLayout(canvas, settings, options = {}) {
       context.restore();
     }
   } else {
-    context.strokeStyle = "#cfb188";
+    context.strokeStyle = "#d9d1c4";
     context.setLineDash([12, 8]);
     context.strokeRect(QR_FRAME.x + 18, QR_FRAME.y + 18, QR_FRAME.width - 36, QR_FRAME.height - 36);
     context.setLineDash([]);
-    context.fillStyle = "#8b6d4e";
+    context.fillStyle = "#8b7d6a";
     context.textAlign = "center";
     context.textBaseline = "middle";
     context.font = "600 26px Arial";
@@ -220,12 +213,11 @@ export function renderQrLayout(canvas, settings, options = {}) {
   context.fillText(accountNumber || "000 0000 000 000", OUTPUT_WIDTH / 2, 726);
 
   context.fillStyle = "#c63b2f";
-  context.fillRect(72, 760, OUTPUT_WIDTH - 144, 6);
   context.font = "700 92px Georgia";
   context.fillText(currencyLabel || "USD $", OUTPUT_WIDTH / 2, 828);
 
   if (showGuide) {
-    context.strokeStyle = "rgba(23, 52, 73, 0.28)";
+    context.strokeStyle = "rgba(125, 116, 102, 0.3)";
     context.lineWidth = 2;
     context.setLineDash([10, 6]);
     context.strokeRect(QR_FRAME.x, QR_FRAME.y, QR_FRAME.width, QR_FRAME.height);
