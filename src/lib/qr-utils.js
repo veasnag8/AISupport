@@ -1,6 +1,6 @@
 export const OUTPUT_WIDTH = 631;
 export const OUTPUT_HEIGHT = 892;
-export const QR_FRAME = { x: 67, y: 40, width: 497, height: 497 };
+export const QR_FRAME = { x: 35, y: 20, width: 561, height: 561 };
 
 const CORNER_SIZE = 58;
 const CORNER_THICKNESS = 10;
@@ -91,6 +91,27 @@ function drawCurrencyText(context, currencyLabel, centerX, baselineY) {
     family: "Georgia",
     color: "#e0332f",
   });
+}
+
+function drawBadgeSymbol(context, badgeText, centerX, centerY) {
+  const normalizedBadge = (badgeText || "$").trim();
+
+  if (!normalizedBadge) {
+    return;
+  }
+
+  context.fillStyle = "#ffffff";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+
+  if (normalizedBadge === "៛") {
+    context.font = "700 74px 'Noto Sans Khmer', 'Khmer OS Battambang', Arial";
+    context.fillText(normalizedBadge, centerX, centerY + 4);
+    return;
+  }
+
+  context.font = "700 64px Arial";
+  context.fillText(normalizedBadge, centerX, centerY + 2);
 }
 
 function getBaseDraw(sourceImage) {
@@ -241,26 +262,25 @@ export function renderQrLayout(canvas, settings, options = {}) {
   );
 
   if (badgeText?.trim()) {
+    const badgeCenterX = OUTPUT_WIDTH / 2;
+    const badgeCenterY = QR_FRAME.y + QR_FRAME.height / 2 + 12;
+
     context.beginPath();
     context.arc(
-      OUTPUT_WIDTH / 2,
-      QR_FRAME.y + QR_FRAME.height / 2 + 12,
+      badgeCenterX,
+      badgeCenterY,
       BADGE_RADIUS,
       0,
       Math.PI * 2,
     );
     context.fillStyle = "#c93f32";
     context.fill();
-    context.fillStyle = "#ffffff";
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-    context.font = "700 64px Arial";
-    context.fillText(badgeText.trim(), OUTPUT_WIDTH / 2, QR_FRAME.y + QR_FRAME.height / 2 + 14);
+    drawBadgeSymbol(context, badgeText, badgeCenterX, badgeCenterY);
   }
 
   context.textAlign = "center";
   context.textBaseline = "alphabetic";
-  drawFittedText(context, accountName || "ACCOUNT NAME", OUTPUT_WIDTH / 2, 642, {
+  drawFittedText(context, accountName || "ACCOUNT NAME", OUTPUT_WIDTH / 2, 664, {
     maxWidth: OUTPUT_WIDTH - 70,
     fontSize: 32,
     minFontSize: 22,
@@ -269,7 +289,7 @@ export function renderQrLayout(canvas, settings, options = {}) {
     color: "#1a1a1a",
   });
 
-  drawFittedText(context, accountNumber || "000 0000 000 000", OUTPUT_WIDTH / 2, 706, {
+  drawFittedText(context, accountNumber || "000 0000 000 000", OUTPUT_WIDTH / 2, 736, {
     maxWidth: OUTPUT_WIDTH - 60,
     fontSize: 56,
     minFontSize: 34,
@@ -278,7 +298,7 @@ export function renderQrLayout(canvas, settings, options = {}) {
     color: "#111111",
   });
 
-  drawCurrencyText(context, currencyLabel, OUTPUT_WIDTH / 2, 814);
+  drawCurrencyText(context, currencyLabel, OUTPUT_WIDTH / 2, 846);
 
   if (showGuide) {
     context.strokeStyle = "rgba(150, 150, 150, 0.28)";

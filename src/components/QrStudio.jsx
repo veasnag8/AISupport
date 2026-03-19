@@ -14,13 +14,36 @@ import {
 const textFields = [
   { id: "accountName", label: "Account name" },
   { id: "accountNumber", label: "Account number" },
-  { id: "badgeText", label: "Center badge", placeholder: "Leave blank to hide" },
 ];
 
 const currencyOptions = [
   { value: "USD $", label: "USD $" },
   { value: "KHR ៛", label: "KHR ៛" },
 ];
+
+const badgeOptions = [
+  { value: "", label: "None" },
+  { value: "$", label: "$" },
+  { value: "៛", label: "៛" },
+];
+
+function formatAccountNumber(value) {
+  const digits = value.replace(/\D/g, "").slice(0, 13);
+  const groups = [3, 4, 3, 3];
+  const parts = [];
+  let cursor = 0;
+
+  for (const size of groups) {
+    if (cursor >= digits.length) {
+      break;
+    }
+
+    parts.push(digits.slice(cursor, cursor + size));
+    cursor += size;
+  }
+
+  return parts.join(" ");
+}
 
 function createEmptyPreviewMessage(sourceImage) {
   return sourceImage
@@ -128,7 +151,7 @@ export default function QrStudio() {
   function updateDetail(field, value) {
     setDetails((current) => ({
       ...current,
-      [field]: value,
+      [field]: field === "accountNumber" ? formatAccountNumber(value) : value,
     }));
   }
 
@@ -291,6 +314,8 @@ export default function QrStudio() {
                   id={field.id}
                   value={details[field.id]}
                   placeholder={field.placeholder}
+                  inputMode={field.id === "accountNumber" ? "numeric" : undefined}
+                  maxLength={field.id === "accountNumber" ? 16 : undefined}
                   onChange={(event) => updateDetail(field.id, event.target.value)}
                 />
               </div>
@@ -310,54 +335,77 @@ export default function QrStudio() {
                 ))}
               </select>
             </div>
+
+            <div className="field">
+              <label htmlFor="badgeText">Center badge</label>
+              <select
+                id="badgeText"
+                value={details.badgeText}
+                onChange={(event) => updateDetail("badgeText", event.target.value)}
+              >
+                {badgeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div className="range-stack">
-            <div className="range-row">
-              <label htmlFor="zoom-range">Zoom</label>
-              <span>{zoom.toFixed(2)}x</span>
+          <div className="adjust-grid">
+            <div className="range-stack">
+              <div className="range-row range-row--control">
+                <label htmlFor="zoom-range">Zoom</label>
+                <div className="range-inline">
+                  <span>{zoom.toFixed(2)}x</span>
+                  <input
+                    className="range-number"
+                    type="number"
+                    min="1"
+                    max="3"
+                    step="0.01"
+                    value={zoom}
+                    onChange={(event) => handleZoomChange(event.target.value)}
+                  />
+                </div>
+              </div>
+              <input
+                id="zoom-range"
+                type="range"
+                min="1"
+                max="3"
+                step="0.01"
+                value={zoom}
+                onChange={(event) => handleZoomChange(event.target.value)}
+              />
             </div>
-            <input
-              id="zoom-range"
-              type="range"
-              min="1"
-              max="3"
-              step="0.01"
-              value={zoom}
-              onChange={(event) => handleZoomChange(event.target.value)}
-            />
-            <input
-              type="number"
-              min="1"
-              max="3"
-              step="0.01"
-              value={zoom}
-              onChange={(event) => handleZoomChange(event.target.value)}
-            />
-          </div>
 
-          <div className="range-stack">
-            <div className="range-row">
-              <label htmlFor="rotation-range">Rotation</label>
-              <span>{rotation} deg</span>
+            <div className="range-stack">
+              <div className="range-row range-row--control">
+                <label htmlFor="rotation-range">Rotation</label>
+                <div className="range-inline">
+                  <span>{rotation} deg</span>
+                  <input
+                    className="range-number"
+                    type="number"
+                    min="-180"
+                    max="180"
+                    step="1"
+                    value={rotation}
+                    onChange={(event) => handleRotationChange(event.target.value)}
+                  />
+                </div>
+              </div>
+              <input
+                id="rotation-range"
+                type="range"
+                min="-180"
+                max="180"
+                step="1"
+                value={rotation}
+                onChange={(event) => handleRotationChange(event.target.value)}
+              />
             </div>
-            <input
-              id="rotation-range"
-              type="range"
-              min="-180"
-              max="180"
-              step="1"
-              value={rotation}
-              onChange={(event) => handleRotationChange(event.target.value)}
-            />
-            <input
-              type="number"
-              min="-180"
-              max="180"
-              step="1"
-              value={rotation}
-              onChange={(event) => handleRotationChange(event.target.value)}
-            />
           </div>
 
           <div className="button-row">
