@@ -65,6 +65,20 @@ function formatAccountName(value) {
   return value.toLocaleUpperCase();
 }
 
+function getExportFilename(accountName, sourceFileName) {
+  const sanitizedAccountName = formatAccountName(accountName || "")
+    .replace(/[<>:"/\\|?*\u0000-\u001F]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/[. ]+$/g, "");
+
+  const fallbackName = sourceFileName
+    ? sourceFileName.replace(/\.[^.]+$/, "")
+    : "qr-layout";
+
+  return `${sanitizedAccountName || fallbackName}.png`;
+}
+
 export default function QrStudio() {
   const previewRef = useRef(null);
   const dragRef = useRef({
@@ -261,7 +275,7 @@ export default function QrStudio() {
 
     downloadBlob(
       blob,
-      `${fileName ? fileName.replace(/\.[^.]+$/, "") : "qr-layout"}.png`,
+      getExportFilename(details.accountName, fileName),
     );
   }
 

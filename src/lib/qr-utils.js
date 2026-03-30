@@ -16,8 +16,8 @@ export const BADGE_SCALE_MAX = 1.6;
 export const BADGE_SCALE_STEP = 0.05;
 
 export const defaultQrDetails = {
-  accountName: "PHSAR REATREY KPC USD",
-  accountNumber: "005 0000 050 544",
+  accountName: "",
+  accountNumber: "",
   currencyLabel: "USD $",
   badgeText: "$",
   badgeScale: 1,
