@@ -1,9 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import Panel from "./Panel";
-import { dataUrlToImage, downloadBlob, readFileAsDataUrl } from "../lib/file-utils";
 import {
+  dataUrlToImage,
+  downloadBlob,
+  enhanceImage,
+  isPdfFile,
+  pdfFileToImage,
+  readFileAsDataUrl,
+} from "../lib/file-utils";
+import {
+  BADGE_SCALE_MAX,
+  BADGE_SCALE_MIN,
+  BADGE_SCALE_STEP,
   OUTPUT_HEIGHT,
   OUTPUT_WIDTH,
+  ZOOM_MAX,
+  ZOOM_MIN,
+  ZOOM_STEP,
   clamp,
   defaultQrDetails,
   getCenteredCrop,
@@ -16,15 +29,18 @@ const textFields = [
   { id: "accountNumber", label: "Account number" },
 ];
 
+const KHMER_RIEL_SYMBOL = "\u17DB";
+const KHR_CURRENCY_LABEL = `KHR ${KHMER_RIEL_SYMBOL}`;
+
 const currencyOptions = [
   { value: "USD $", label: "USD $" },
-  { value: "KHR ៛", label: "KHR ៛" },
+  { value: KHR_CURRENCY_LABEL, label: KHR_CURRENCY_LABEL },
 ];
 
 const badgeOptions = [
   { value: "", label: "None" },
   { value: "$", label: "$" },
-  { value: "៛", label: "៛" },
+  { value: KHMER_RIEL_SYMBOL, label: KHMER_RIEL_SYMBOL },
 ];
 
 function formatAccountNumber(value) {
@@ -45,10 +61,8 @@ function formatAccountNumber(value) {
   return parts.join(" ");
 }
 
-function createEmptyPreviewMessage(sourceImage) {
-  return sourceImage
-    ? "Drag inside the preview frame to fine-tune the crop."
-    : "Upload an image to generate the QR layout preview.";
+function formatAccountName(value) {
+  return value.toLocaleUpperCase();
 }
 
 export default function QrStudio() {
@@ -64,16 +78,15 @@ export default function QrStudio() {
   });
 
   const [sourceImage, setSourceImage] = useState(null);
+  const [originalImage, setOriginalImage] = useState(null);
+  const [enhancedImage, setEnhancedImage] = useState(null);
   const [fileName, setFileName] = useState("");
+  const [isEnhanced, setIsEnhanced] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [details, setDetails] = useState(defaultQrDetails);
-  const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState({
-    tone: "info",
-    text: createEmptyPreviewMessage(null),
-  });
 
   useEffect(() => {
     if (!previewRef.current) {
@@ -120,43 +133,68 @@ export default function QrStudio() {
       return;
     }
 
-    setBusy(true);
-    setNotice({ tone: "info", text: "Preparing preview..." });
-
     try {
-      const imageDataUrl = await readFileAsDataUrl(file);
-      const nextImage = await dataUrlToImage(imageDataUrl);
+      const nextImage = isPdfFile(file)
+        ? await pdfFileToImage(file)
+        : await dataUrlToImage(await readFileAsDataUrl(file));
       const nextCrop = getCenteredCrop(nextImage, 1);
 
+      setOriginalImage(nextImage);
+      setEnhancedImage(null);
       setSourceImage(nextImage);
       setFileName(file.name);
+      setIsEnhanced(false);
       setZoom(1);
       setRotation(0);
       setCrop(nextCrop);
-      setNotice({
-        tone: "success",
-        text: `${file.name} loaded. Adjust the crop, then export the PNG.`,
-      });
     } catch (error) {
-      setNotice({
-        tone: "error",
-        text: error.message || "Could not open that file. Try PNG, JPG, or WEBP.",
-      });
+      console.error(error);
     } finally {
-      setBusy(false);
       event.target.value = "";
+    }
+  }
+
+  async function handleEnhancePhoto() {
+    if (!originalImage) {
+      return;
+    }
+
+    if (isEnhanced) {
+      setSourceImage(originalImage);
+      setIsEnhanced(false);
+      setCrop(normalizeCropPosition(originalImage, crop, zoom));
+      return;
+    }
+
+    try {
+      setIsEnhancing(true);
+      const nextEnhancedImage = enhancedImage || (await enhanceImage(originalImage));
+
+      setEnhancedImage(nextEnhancedImage);
+      setSourceImage(nextEnhancedImage);
+      setIsEnhanced(true);
+      setCrop(normalizeCropPosition(nextEnhancedImage, crop, zoom));
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsEnhancing(false);
     }
   }
 
   function updateDetail(field, value) {
     setDetails((current) => ({
       ...current,
-      [field]: field === "accountNumber" ? formatAccountNumber(value) : value,
+      [field]:
+        field === "accountNumber"
+          ? formatAccountNumber(value)
+          : field === "accountName"
+            ? formatAccountName(value)
+            : value,
     }));
   }
 
   function handleZoomChange(rawValue) {
-    const nextZoom = clamp(Number(rawValue) || 1, 1, 3);
+    const nextZoom = clamp(Number(rawValue) || 1, ZOOM_MIN, ZOOM_MAX);
     const nextCrop = normalizeCropPosition(sourceImage, crop, nextZoom);
 
     setZoom(nextZoom);
@@ -167,6 +205,23 @@ export default function QrStudio() {
     setRotation(clamp(Number(rawValue) || 0, -180, 180));
   }
 
+  function handleBadgeScaleChange(rawValue) {
+    const nextBadgeScale = clamp(
+      Number(rawValue) || defaultQrDetails.badgeScale,
+      BADGE_SCALE_MIN,
+      BADGE_SCALE_MAX,
+    );
+
+    setDetails((current) => ({
+      ...current,
+      badgeScale: nextBadgeScale,
+    }));
+  }
+
+  function nudgeBadgeScale(direction) {
+    handleBadgeScaleChange(details.badgeScale + BADGE_SCALE_STEP * direction);
+  }
+
   function resetView() {
     if (!sourceImage) {
       return;
@@ -175,10 +230,6 @@ export default function QrStudio() {
     setZoom(1);
     setRotation(0);
     setCrop(getCenteredCrop(sourceImage, 1));
-    setNotice({
-      tone: "info",
-      text: "Preview reset to the centered default framing.",
-    });
   }
 
   async function exportPng() {
@@ -205,10 +256,6 @@ export default function QrStudio() {
     });
 
     if (!blob) {
-      setNotice({
-        tone: "error",
-        text: "Could not create the PNG export.",
-      });
       return;
     }
 
@@ -216,10 +263,6 @@ export default function QrStudio() {
       blob,
       `${fileName ? fileName.replace(/\.[^.]+$/, "") : "qr-layout"}.png`,
     );
-    setNotice({
-      tone: "success",
-      text: "PNG export downloaded.",
-    });
   }
 
   function handlePointerDown(event) {
@@ -275,6 +318,8 @@ export default function QrStudio() {
     }
   }
 
+  const badgeEnabled = Boolean(details.badgeText.trim());
+
   return (
     <section className="section-grid">
       <Panel
@@ -283,11 +328,6 @@ export default function QrStudio() {
         description="Upload a QR image, adjust the framing, and export the final branded card as PNG."
       >
         <div className="stack-lg">
-          <div className="notice info">
-            <strong>Tip</strong>
-            <span>Use a clean QR image for the sharpest final export.</span>
-          </div>
-
           <div className="field">
             <label htmlFor="qr-upload">Source file</label>
             <div className="inline-actions">
@@ -298,10 +338,10 @@ export default function QrStudio() {
                 id="qr-upload"
                 className="sr-only"
                 type="file"
-                accept="image/png,image/jpeg,image/webp"
+                accept="image/png,image/jpeg,image/webp,application/pdf,.pdf"
                 onChange={handleUpload}
               />
-              <span className="hint">PNG, JPG, WEBP</span>
+              <span className="hint">PNG, JPG, WEBP, PDF</span>
             </div>
             {fileName ? <div className="meta-line">Loaded: {fileName}</div> : null}
           </div>
@@ -361,9 +401,9 @@ export default function QrStudio() {
                   <input
                     className="range-number"
                     type="number"
-                    min="1"
-                    max="3"
-                    step="0.01"
+                    min={ZOOM_MIN}
+                    max={ZOOM_MAX}
+                    step={ZOOM_STEP}
                     value={zoom}
                     onChange={(event) => handleZoomChange(event.target.value)}
                   />
@@ -372,9 +412,9 @@ export default function QrStudio() {
               <input
                 id="zoom-range"
                 type="range"
-                min="1"
-                max="3"
-                step="0.01"
+                min={ZOOM_MIN}
+                max={ZOOM_MAX}
+                step={ZOOM_STEP}
                 value={zoom}
                 onChange={(event) => handleZoomChange(event.target.value)}
               />
@@ -406,11 +446,67 @@ export default function QrStudio() {
                 onChange={(event) => handleRotationChange(event.target.value)}
               />
             </div>
+
+            <div className="range-stack">
+              <div className="range-row range-row--control">
+                <label htmlFor="badge-scale-range">Badge zoom</label>
+                <div className="range-inline">
+                  <button
+                    type="button"
+                    className="button secondary button--step"
+                    onClick={() => nudgeBadgeScale(-1)}
+                    disabled={!badgeEnabled}
+                    aria-label="Zoom out center badge"
+                  >
+                    -
+                  </button>
+                  <span>{details.badgeScale.toFixed(2)}x</span>
+                  <button
+                    type="button"
+                    className="button secondary button--step"
+                    onClick={() => nudgeBadgeScale(1)}
+                    disabled={!badgeEnabled}
+                    aria-label="Zoom in center badge"
+                  >
+                    +
+                  </button>
+                  <input
+                    className="range-number"
+                    type="number"
+                    min={BADGE_SCALE_MIN}
+                    max={BADGE_SCALE_MAX}
+                    step={BADGE_SCALE_STEP}
+                    value={details.badgeScale}
+                    onChange={(event) => handleBadgeScaleChange(event.target.value)}
+                    disabled={!badgeEnabled}
+                  />
+                </div>
+              </div>
+              <input
+                id="badge-scale-range"
+                type="range"
+                min={BADGE_SCALE_MIN}
+                max={BADGE_SCALE_MAX}
+                step={BADGE_SCALE_STEP}
+                value={details.badgeScale}
+                onChange={(event) => handleBadgeScaleChange(event.target.value)}
+                disabled={!badgeEnabled}
+              />
+              <div className="hint">Tap - or + to zoom the center badge in or out.</div>
+            </div>
           </div>
 
           <div className="button-row">
             <button type="button" className="button ghost" onClick={resetView}>
               Reset view
+            </button>
+            <button
+              type="button"
+              className="button secondary"
+              onClick={handleEnhancePhoto}
+              disabled={!sourceImage || isEnhancing}
+            >
+              {isEnhancing ? "Enhancing..." : isEnhanced ? "Use original" : "Enhance photo"}
             </button>
             <button
               type="button"
@@ -420,11 +516,6 @@ export default function QrStudio() {
             >
               Export PNG
             </button>
-          </div>
-
-          <div className={`notice ${notice.tone}`} aria-live="polite">
-            <strong>{busy ? "Working" : "Status"}</strong>
-            <span>{busy ? "Loading source file..." : notice.text}</span>
           </div>
         </div>
       </Panel>

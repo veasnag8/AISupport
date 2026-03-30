@@ -9,12 +9,13 @@
   --ink: #163145;
   --muted: #5d6b74;
   --line: rgba(22, 49, 69, 0.12);
-  --accent: #cb4a37;
-  --accent-deep: #a7392a;
+  --accent-rgb: 236, 26, 35;
+  --accent: #ec1a23;
+  --accent-deep: #ec1a23;
   --success: #1f6a4e;
   --success-soft: rgba(31, 106, 78, 0.12);
-  --error: #9a2e1f;
-  --error-soft: rgba(154, 46, 31, 0.12);
+  --error: #ec1a23;
+  --error-soft: rgba(var(--accent-rgb), 0.12);
   --info: #214d70;
   --info-soft: rgba(33, 77, 112, 0.12);
   --shadow: 0 24px 70px rgba(79, 52, 24, 0.12);
@@ -93,7 +94,7 @@ img {
   right: -60px;
   width: 300px;
   height: 300px;
-  background: radial-gradient(circle, rgba(203, 74, 55, 0.24), transparent 70%);
+  background: radial-gradient(circle, rgba(var(--accent-rgb), 0.24), transparent 70%);
 }
 
 .ambient-b {
@@ -214,8 +215,8 @@ img {
 .range-stack input[type="number"]:focus,
 .range-stack input[type="range"]:focus {
   outline: none;
-  border-color: rgba(203, 74, 55, 0.34);
-  box-shadow: 0 0 0 4px rgba(203, 74, 55, 0.12);
+  border-color: rgba(var(--accent-rgb), 0.34);
+  box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.12);
 }
 
 .field select {
@@ -255,9 +256,9 @@ img {
 }
 
 .button {
-  background: linear-gradient(135deg, var(--accent), #d96644);
+  background: linear-gradient(135deg, var(--accent), var(--accent));
   color: #fff8f4;
-  box-shadow: 0 8px 14px rgba(203, 74, 55, 0.16);
+  box-shadow: 0 8px 14px rgba(var(--accent-rgb), 0.16);
 }
 
 .button.secondary {
@@ -319,6 +320,8 @@ img {
   display: flex;
   align-items: center;
   gap: 5px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .range-row span {
@@ -337,38 +340,17 @@ img {
   min-height: 28px !important;
   padding: 0 6px !important;
   font-size: 0.72rem;
- }
-
-.notice {
-  display: grid;
-  gap: 3px;
-  padding: 8px 10px;
-  border-radius: 12px;
-  border: 1px solid transparent;
 }
 
-.notice strong {
-  font-size: 0.66rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+.button--step {
+  min-width: 30px;
+  padding: 0;
 }
 
-.notice.info {
-  background: var(--info-soft);
-  color: var(--info);
-  border-color: rgba(33, 77, 112, 0.12);
-}
-
-.notice.success {
-  background: var(--success-soft);
-  color: var(--success);
-  border-color: rgba(31, 106, 78, 0.12);
-}
-
-.notice.error {
-  background: var(--error-soft);
-  color: var(--error);
-  border-color: rgba(154, 46, 31, 0.12);
+.range-stack input[type="range"]:disabled,
+.range-stack input[type="number"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .canvas-surface {
@@ -441,8 +423,8 @@ img {
 }
 
 .page-card.is-selected {
-  border-color: rgba(203, 74, 55, 0.34);
-  background: linear-gradient(135deg, rgba(203, 74, 55, 0.11), rgba(255, 255, 255, 0.92));
+  border-color: rgba(var(--accent-rgb), 0.34);
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.11), rgba(255, 255, 255, 0.92));
 }
 
 .page-thumb {

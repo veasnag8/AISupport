@@ -5,12 +5,22 @@ export const QR_FRAME = { x: 35, y: 20, width: 561, height: 561 };
 const CORNER_SIZE = 58;
 const CORNER_THICKNESS = 10;
 const BADGE_RADIUS = 39;
+const BRAND_RED = "#EC1A23";
+const KHMER_RIEL_SYMBOL = "\u17DB";
+const KHR_CURRENCY_LABEL = `KHR ${KHMER_RIEL_SYMBOL}`;
+export const ZOOM_MIN = 0.3;
+export const ZOOM_MAX = 10;
+export const ZOOM_STEP = 0.01;
+export const BADGE_SCALE_MIN = 0.6;
+export const BADGE_SCALE_MAX = 1.6;
+export const BADGE_SCALE_STEP = 0.05;
 
 export const defaultQrDetails = {
   accountName: "PHSAR REATREY KPC USD",
   accountNumber: "005 0000 050 544",
   currencyLabel: "USD $",
   badgeText: "$",
+  badgeScale: 1,
 };
 
 export function clamp(value, min, max) {
@@ -55,12 +65,16 @@ function drawFittedText(
   context.fillText(text, x, y);
 }
 
+function formatAccountName(text) {
+  return (text || "").toLocaleUpperCase();
+}
+
 function drawCurrencyText(context, currencyLabel, centerX, baselineY) {
   const normalizedLabel = (currencyLabel || "USD $").trim();
 
-  if (normalizedLabel === "KHR ៛") {
+  if (normalizedLabel === KHR_CURRENCY_LABEL) {
     const code = "KHR";
-    const symbol = "៛";
+    const symbol = KHMER_RIEL_SYMBOL;
     const gap = 16;
 
     context.textAlign = "left";
@@ -74,7 +88,7 @@ function drawCurrencyText(context, currencyLabel, centerX, baselineY) {
 
     const startX = centerX - (codeWidth + gap + symbolWidth) / 2;
 
-    context.fillStyle = "#e0332f";
+    context.fillStyle = BRAND_RED;
     context.font = "700 82px Georgia";
     context.fillText(code, startX, baselineY);
 
@@ -89,11 +103,11 @@ function drawCurrencyText(context, currencyLabel, centerX, baselineY) {
     minFontSize: 52,
     weight: 700,
     family: "Georgia",
-    color: "#e0332f",
+    color: BRAND_RED,
   });
 }
 
-function drawBadgeSymbol(context, badgeText, centerX, centerY) {
+function drawBadgeSymbol(context, badgeText, centerX, centerY, badgeScale = 1) {
   const normalizedBadge = (badgeText || "$").trim();
 
   if (!normalizedBadge) {
@@ -104,14 +118,14 @@ function drawBadgeSymbol(context, badgeText, centerX, centerY) {
   context.textAlign = "center";
   context.textBaseline = "middle";
 
-  if (normalizedBadge === "៛") {
-    context.font = "700 74px 'Noto Sans Khmer', 'Khmer OS Battambang', Arial";
-    context.fillText(normalizedBadge, centerX, centerY + 4);
+  if (normalizedBadge === KHMER_RIEL_SYMBOL) {
+    context.font = `700 ${Math.round(74 * badgeScale)}px 'Noto Sans Khmer', 'Khmer OS Battambang', Arial`;
+    context.fillText(normalizedBadge, centerX, centerY + Math.round(4 * badgeScale));
     return;
   }
 
-  context.font = "700 64px Arial";
-  context.fillText(normalizedBadge, centerX, centerY + 2);
+  context.font = `700 ${Math.round(64 * badgeScale)}px Arial`;
+  context.fillText(normalizedBadge, centerX, centerY + Math.round(2 * badgeScale));
 }
 
 function getBaseDraw(sourceImage) {
@@ -148,12 +162,14 @@ export function normalizeCropPosition(sourceImage, nextCrop, zoom = 1) {
 
   const scaledWidth = baseDraw.width * zoom;
   const scaledHeight = baseDraw.height * zoom;
-  const minX = Math.min(0, QR_FRAME.width - scaledWidth);
-  const minY = Math.min(0, QR_FRAME.height - scaledHeight);
+  const centeredX = (QR_FRAME.width - scaledWidth) / 2;
+  const centeredY = (QR_FRAME.height - scaledHeight) / 2;
+  const minX = QR_FRAME.width - scaledWidth;
+  const minY = QR_FRAME.height - scaledHeight;
 
   return {
-    x: clamp(nextCrop.x, minX, 0),
-    y: clamp(nextCrop.y, minY, 0),
+    x: scaledWidth <= QR_FRAME.width ? centeredX : clamp(nextCrop.x, minX, 0),
+    y: scaledHeight <= QR_FRAME.height ? centeredY : clamp(nextCrop.y, minY, 0),
   };
 }
 
@@ -190,6 +206,7 @@ export function renderQrLayout(canvas, settings, options = {}) {
     accountNumber,
     currencyLabel,
     badgeText,
+    badgeScale = 1,
   } = settings;
 
   const { showGuide = true } = options;
@@ -236,7 +253,7 @@ export function renderQrLayout(canvas, settings, options = {}) {
     context.fillText("PNG, JPG, or WEBP image", OUTPUT_WIDTH / 2, QR_FRAME.y + QR_FRAME.height / 2 + 24);
   }
 
-  context.fillStyle = "#d43d2e";
+  context.fillStyle = BRAND_RED;
   const cornerOffset = 8;
   drawCorner(context, QR_FRAME.x - cornerOffset, QR_FRAME.y - cornerOffset, 1, 1);
   drawCorner(
@@ -262,6 +279,11 @@ export function renderQrLayout(canvas, settings, options = {}) {
   );
 
   if (badgeText?.trim()) {
+    const resolvedBadgeScale = clamp(
+      Number(badgeScale) || 1,
+      BADGE_SCALE_MIN,
+      BADGE_SCALE_MAX,
+    );
     const badgeCenterX = OUTPUT_WIDTH / 2;
     const badgeCenterY = QR_FRAME.y + QR_FRAME.height / 2 + 12;
 
@@ -269,18 +291,18 @@ export function renderQrLayout(canvas, settings, options = {}) {
     context.arc(
       badgeCenterX,
       badgeCenterY,
-      BADGE_RADIUS,
+      BADGE_RADIUS * resolvedBadgeScale,
       0,
       Math.PI * 2,
     );
-    context.fillStyle = "#c93f32";
+    context.fillStyle = BRAND_RED;
     context.fill();
-    drawBadgeSymbol(context, badgeText, badgeCenterX, badgeCenterY);
+    drawBadgeSymbol(context, badgeText, badgeCenterX, badgeCenterY, resolvedBadgeScale);
   }
 
   context.textAlign = "center";
   context.textBaseline = "alphabetic";
-  drawFittedText(context, accountName || "ACCOUNT NAME", OUTPUT_WIDTH / 2, 664, {
+  drawFittedText(context, formatAccountName(accountName) || "ACCOUNT NAME", OUTPUT_WIDTH / 2, 664, {
     maxWidth: OUTPUT_WIDTH - 70,
     fontSize: 32,
     minFontSize: 22,
